@@ -15,7 +15,7 @@ struct Index {
     for (auto const& dir_entry : std::filesystem::recursive_directory_iterator(directory)) {
       if (dir_entry.is_regular_file()) {
         std::string filename = dir_entry.path().filename();
-        if (filename.ends_with(".sty")) {
+        if (filename.ends_with(".tex") || filename.ends_with(".sty")) {
           std::string module_name = filename.substr(0, filename.size() - strlen(".sty"));
           this->modules[module_name] = true;
         }
@@ -118,19 +118,26 @@ void parse_latex_file(const Index& index, const TSLanguage* language, const char
 
   if (!suggestion.empty()) {
     printf("Suggestion: `sudo dnf install %s`\n", suggestion.c_str());
+  } else {
+    printf("All dependencies are met!\n");
   }
 }
 
 int main(int argc, char **argv) {
-  Index index;
-  index.index_directory("/usr/share/texlive");
-  index.index_directory(".");
-  // index.print();
-
   const char* source_file = "./file.tex";
   if (argc > 1) {
     source_file = argv[1];
   }
+
+  if (!std::filesystem::exists(source_file)) {
+    fprintf(stderr, "Unable to find source file: %s\n", source_file);
+    return 1;
+  }
+
+  Index index;
+  index.index_directory("/usr/share/texlive");
+  index.index_directory(".");
+  // index.print();
 
   char* source = read_source_code(source_file);
   
